@@ -28,33 +28,12 @@ This workflow automates the entire process:
 4. Triggers CI on the updated branches
 5. Auto-merge completes once CI passes
 
-**Result**: A chain of 5 PRs merges automatically in ~2-3 minutes with zero manual intervention.
-
-## How It Works
-
-```
-Developer enables auto-merge on PR #1-5
-    ↓
-Merge PR #1 to main (manual)
-    ↓
-Workflow triggers → Updates PR #2-5 branches → CI runs
-    ↓
-PR #2 CI passes → Auto-merges → Workflow triggers again
-    ↓
-Workflow updates PR #3-5 → CI runs
-    ↓
-PR #3 merges... cascade continues
-    ↓
-All PRs merged automatically
-```
-
 ## Key Features
 
 - ✅ **Fully automated**: No manual "Update branch" clicks needed
 - ✅ **Smart detection**: Only updates PRs with auto-merge enabled
 - ✅ **Conflict handling**: Gracefully skips PRs with merge conflicts
 - ✅ **Multi-branch support**: Configure for `main`, `develop`, `staging`, etc.
-- ✅ **Dynamic adaptation**: Single source of truth for base branch configuration
 - ✅ **Proper CI triggering**: Uses GitHub App tokens to ensure CI runs on updated branches
 
 ## Comparison with GitHub's Merge Queue
@@ -80,13 +59,7 @@ GitHub offers a built-in [Merge Queue](https://docs.github.com/en/repositories/c
 
 ### This Workflow
 
-This workflow provides automatic PR updates for repositories without Enterprise Cloud access:
-
-**How it works:**
-- Watches for pushes to your base branch
-- Automatically merges base branch changes into PR branches with auto-merge enabled
-- Triggers CI on updated branches
-- PRs merge individually when CI passes
+This workflow provides automatic PR updates for repositories without Enterprise Cloud access.
 
 **When to use:**
 - You don't have access to GitHub Enterprise Cloud
@@ -105,25 +78,22 @@ This workflow provides automatic PR updates for repositories without Enterprise 
 
 ### Prerequisites
 
-- **Organization admin access** (to create GitHub App) *or* Personal Access Token
-- **Repository admin access** (to add secrets/variables)
+- Repository admin access (to add secrets/variables)
 
-### Option 1: GitHub App (Recommended for Organizations)
+### Option 1: GitHub App (Recommended)
 
-GitHub Apps are recommended for organization repositories because they:
-- Are organization-owned (not tied to individual users)
-- Survive employee turnover
-- Have fine-grained permissions
-- Use auto-expiring tokens (1 hour)
+GitHub Apps are the recommended approach for all users:
+- **Fine-grained permissions**: Only grant exactly what's needed (Contents write, PRs read)
+- **Auto-expiring tokens**: Tokens expire after 1 hour (more secure than long-lived PATs)
+- **Better audit trail**: Actions are clearly attributed to the app
+- **Not tied to user accounts**: For organizations, survives employee turnover
 
 #### Step 1: Create GitHub App
 
-**For an organization:**
-1. Go to: `https://github.com/organizations/YOUR-ORG/settings/apps`
-2. Click **"New GitHub App"**
+1. Go to GitHub App settings:
+   - **Organization**: `https://github.com/organizations/YOUR-ORG/settings/apps`
+   - **Personal account**: `https://github.com/settings/apps`
 
-**For a personal account (testing):**
-1. Go to: `https://github.com/settings/apps`
 2. Click **"New GitHub App"**
 
 #### Step 2: Configure App Settings
@@ -199,9 +169,9 @@ Commit and push. The workflow is now active!
 
 ---
 
-### Option 2: Personal Access Token (For Personal Repos)
+### Option 2: Personal Access Token (Alternative)
 
-If you don't want to create a GitHub App (e.g., for personal repositories):
+If you prefer not to create a GitHub App:
 
 #### Step 1: Generate PAT
 
@@ -273,8 +243,6 @@ PR #3-5: Branches updated automatically
 PR #3: CI passes → Auto-merges
    ↓ (continues...)
 ```
-
-**Performance**: Typically ~30-60 seconds per PR (depending on CI duration)
 
 ### Testing the Setup
 
