@@ -1,1 +1,0 @@
-Test repository for PR auto-update mechanism

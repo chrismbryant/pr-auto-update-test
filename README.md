@@ -56,29 +56,48 @@ All PRs merged automatically
 - ✅ **Multi-branch support**: Configure for `main`, `develop`, `staging`, etc.
 - ✅ **Dynamic adaptation**: Single source of truth for base branch configuration
 - ✅ **Proper CI triggering**: Uses GitHub App tokens to ensure CI runs on updated branches
-- ✅ **Battle-tested**: 13+ automated PR merges validated in production
 
-## GitHub Merge Queue vs This Solution
+## Comparison with GitHub's Merge Queue
 
 ### GitHub's Merge Queue
 
-GitHub offers a built-in [Merge Queue](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue) feature that batches and tests PRs before merging.
+GitHub offers a built-in [Merge Queue](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue) feature that provides a more robust solution for managing PR merges.
 
-**Limitations:**
-- ❌ **Enterprise only** - Requires GitHub Enterprise Cloud
-- ❌ **Different workflow** - Batches PRs together, doesn't preserve individual PR history
-- ❌ **Fixed behavior** - Less control over merge strategy and timing
+**How it works:**
+- PRs are added to a queue when approved and checks pass
+- GitHub creates temporary "merge group" branches that combine queued changes
+- Tests run on these merge groups to catch integration issues before merging
+- If tests pass, changes are merged to the base branch atomically
+- If tests fail, the problematic PR is removed and the queue continues
 
-### This Solution
+**Benefits:**
+- Catches integration bugs that only appear when multiple PRs are combined
+- Prevents "broken main" scenarios where individually passing PRs break when merged together
+- Managed by GitHub with automatic retry logic
+- Built-in merge conflict handling
 
-- ✅ **Free for all GitHub tiers** - Works on Free, Team, and Enterprise
-- ✅ **Preserves PR workflow** - Each PR merges individually with its own history
-- ✅ **Customizable** - Full control over triggers, merge strategy, and behavior
-- ✅ **Works with auto-merge** - Leverages GitHub's built-in auto-merge feature
+**Availability:** ⚠️ **Requires GitHub Enterprise Cloud** - not available on Free, Team, or GitHub Enterprise Server plans
 
-**When to use each:**
-- **Merge Queue**: If you have Enterprise Cloud and want GitHub's managed batching solution
-- **This workflow**: If you want free, customizable auto-updates that work with standard auto-merge
+### This Workflow
+
+This workflow provides automatic PR updates for repositories without Enterprise Cloud access:
+
+**How it works:**
+- Watches for pushes to your base branch
+- Automatically merges base branch changes into PR branches with auto-merge enabled
+- Triggers CI on updated branches
+- PRs merge individually when CI passes
+
+**When to use:**
+- You don't have access to GitHub Enterprise Cloud
+- You want individual PR merges with preserved history
+- You need customizable behavior (specific branches, merge strategies, etc.)
+- Your CI catches integration issues reliably
+
+**Trade-offs:**
+- Does not test PRs together before merging (integration issues may slip through)
+- Each PR merges sequentially rather than being validated as a batch
+- Requires manual workflow setup and maintenance
 
 ---
 
@@ -383,74 +402,9 @@ jobs:
 
 ---
 
-## Repository Structure
-
-```
-.
-├── .github/
-│   └── workflows/
-│       ├── auto-update-prs.yml  # Main workflow
-│       └── ci.yml                # Example CI workflow
-└── README.md                     # This file
-```
-
----
-
-## How It Differs From Manual Updates
-
-### Manual Process (Old Way)
-
-```
-Time: 0:00  - PR #1 merges
-Time: 0:01  - Click "Update branch" on PR #2 → Wait for CI
-Time: 1:30  - PR #2 CI passes → Merges
-Time: 1:31  - Click "Update branch" on PR #3 → Wait for CI
-Time: 3:00  - PR #3 CI passes → Merges
-...
-Total: ~10 minutes of manual work
-```
-
-### Automated Process (With This Workflow)
-
-```
-Time: 0:00  - PR #1 merges
-Time: 0:01  - Workflow auto-updates PR #2-5
-Time: 1:30  - PR #2 CI passes → Auto-merges → Workflow runs
-Time: 1:31  - Workflow auto-updates PR #3-5
-Time: 3:00  - PR #3 CI passes → Auto-merges → Workflow runs
-...
-Total: 0 minutes of manual work, same total time
-```
-
----
-
 ## Security Considerations
 
 - **GitHub App tokens**: Auto-expire after 1 hour (more secure than long-lived PATs)
 - **Minimal permissions**: Only Contents (write) and Pull requests (read)
 - **Secrets encryption**: All credentials stored as encrypted GitHub secrets
 - **Audit trail**: All actions logged and attributed to the app/bot
-
-### Best Practices
-
-1. **Rotate keys regularly**: Generate new private keys every 6-12 months
-2. **Use separate apps per environment**: Different apps for dev/staging/prod
-3. **Review permissions**: Regularly audit app permissions and access
-4. **Monitor activity**: Check Actions logs for unexpected behavior
-5. **Limit scope**: Install app only on repositories that need it
-
----
-
-## Contributing
-
-Found an issue or have an improvement? Please open an issue or pull request!
-
-## License
-
-MIT License - feel free to use this in your projects!
-
-## Acknowledgments
-
-Inspired by the need to streamline PR workflows for teams using linear history requirements.
-
-Built with GitHub Actions and the [actions/create-github-app-token](https://github.com/actions/create-github-app-token) action.
